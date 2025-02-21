@@ -8,6 +8,29 @@ if (!(Get-Command choco.exe -ErrorAction SilentlyContinue)) {
 } else {
     Write-Output "Chocolatey is already installed."
 }
+
+# Install Microsoft Edge if not present
+if (!(Get-Command "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" -ErrorAction SilentlyContinue)) {
+    Write-Output "Installing Microsoft Edge via Chocolatey..."
+    choco install microsoft-edge --yes
+    Write-Output "Microsoft Edge installation complete."
+} else {
+    Write-Output "Microsoft Edge is already installed."
+}
+
+# Install SetDefaultBrowser via Chocolatey
+if (!(Get-Command "SetDefaultBrowser.exe" -ErrorAction SilentlyContinue)) {
+    Write-Output "Installing SetDefaultBrowser via Chocolatey..."
+    choco install setdefaultbrowser -y
+    Write-Output "SetDefaultBrowser installation complete."
+} else {
+    Write-Output "SetDefaultBrowser is already installed."
+}
+  
+# Set Microsoft Edge as the default browser
+Write-Output "Setting Microsoft Edge as the default browser..."
+SetDefaultBrowser edge
+Write-Output "Microsoft Edge successfully set as the default browser." 
   
 # Install SQL Server Management Studio (SSMS)
 if (!(Get-Command "C:\Program Files (x86)\Microsoft SQL Server Management Studio 20\Common7\IDE\Ssms.exe" -ErrorAction SilentlyContinue)) {
@@ -30,7 +53,7 @@ if (!(Test-Path $backupDestination)) {
     Write-Output "Backup already exists."
 }
   
-# Restore the AdventureWorks database
+# Restore the AdventureWorks database as "Adatum"
 Write-Output "Restoring AdventureWorksLT2019 database..."
 Invoke-Sqlcmd -ServerInstance "localhost" -Database "master" -Query "
 RESTORE DATABASE Adatum 
