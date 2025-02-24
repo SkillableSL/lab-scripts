@@ -12,6 +12,60 @@ $part2Script = @'
 Write-Output "Beginning Stage 2 (post-reboot) tasks..."
 
 # ===========================
+# Install SetDefaultBrowser
+# ===========================
+if (!(Get-Command "SetDefaultBrowser.exe" -ErrorAction SilentlyContinue)) {
+    Write-Output "Installing SetDefaultBrowser via Chocolatey..."
+    choco install setdefaultbrowser -y
+    Write-Output "SetDefaultBrowser installation complete."
+} else {
+    Write-Output "SetDefaultBrowser is already installed."
+}
+
+# ===========================
+# Set Microsoft Edge as the default browser
+# ===========================
+Write-Output "Setting Microsoft Edge as the default browser..."
+SetDefaultBrowser edge
+Write-Output "Microsoft Edge successfully set as the default browser."
+
+Write-Output "Stage 2 tasks completed."
+# --------------------------
+# END STAGE 2 SCRIPT
+# --------------------------
+'@
+
+################################################################################
+# STEP 2: WRITE STAGE 2 SCRIPT TO DISK
+################################################################################
+$stage2Path = "C:\Scripts\Stage2.ps1"
+Set-Content -Path $stage2Path -Value $part2Script -Force
+Write-Output "Stage 2 script written to $stage2Path."
+
+################################################################################
+# STEP 3: CREATE A RUNONCE ENTRY TO EXECUTE STAGE 2 AFTER REBOOT
+################################################################################
+$runOncePath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
+$partTwoCommand = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$stage2Path`""
+New-ItemProperty -Path $runOncePath -Name "PostDotNetInstall" -Value $partTwoCommand -PropertyType String -Force
+Write-Output "RunOnce entry created to execute Stage 2 script after reboot."
+
+################################################################################
+# STEP 4: INSTALL CHOCOLATEY + CHECK .NET 4.8
+################################################################################
+
+# Install Chocolatey if not present
+if (!(Get-Command choco.exe -ErrorAction SilentlyContinue)) {
+    Write-Output "Installing Chocolatey..."
+    Set-ExecutionPolicy Bypass -Scope Process -Force
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    Write-Output "Chocolatey installation complete."
+} else {
+    Write-Output "Chocolatey is already installed."
+}
+
+# ===========================
 # Install SQL Server Management Studio (SSMS)
 # ===========================
 if (!(Get-Command "C:\Program Files (x86)\Microsoft SQL Server Management Studio 20\Common7\IDE\Ssms.exe" -ErrorAction SilentlyContinue)) {
@@ -92,24 +146,6 @@ Set-ItemProperty -Path $registryPath -Name $registryName -Value 1 -Type DWord
 Write-Output "Server Manager will no longer launch at logon."
 
 # ===========================
-# Install SetDefaultBrowser
-# ===========================
-if (!(Get-Command "SetDefaultBrowser.exe" -ErrorAction SilentlyContinue)) {
-    Write-Output "Installing SetDefaultBrowser via Chocolatey..."
-    choco install setdefaultbrowser -y
-    Write-Output "SetDefaultBrowser installation complete."
-} else {
-    Write-Output "SetDefaultBrowser is already installed."
-}
-
-# ===========================
-# Set Microsoft Edge as the default browser
-# ===========================
-Write-Output "Setting Microsoft Edge as the default browser..."
-SetDefaultBrowser edge
-Write-Output "Microsoft Edge successfully set as the default browser."
-
-# ===========================
 # Wait for SQL to be ready, then restore the database
 # ===========================
 function Wait-ForSql {
@@ -146,42 +182,6 @@ MOVE 'AdventureWorksLT2019_Log' TO 'C:\Program Files\Microsoft SQL Server\MSSQL1
 REPLACE
 "
 Write-Output "Database restoration complete."
-
-Write-Output "Stage 2 tasks completed."
-# --------------------------
-# END STAGE 2 SCRIPT
-# --------------------------
-'@
-
-################################################################################
-# STEP 2: WRITE STAGE 2 SCRIPT TO DISK
-################################################################################
-$stage2Path = "C:\Scripts\Stage2.ps1"
-Set-Content -Path $stage2Path -Value $part2Script -Force
-Write-Output "Stage 2 script written to $stage2Path."
-
-################################################################################
-# STEP 3: CREATE A RUNONCE ENTRY TO EXECUTE STAGE 2 AFTER REBOOT
-################################################################################
-$runOncePath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
-$partTwoCommand = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$stage2Path`""
-New-ItemProperty -Path $runOncePath -Name "PostDotNetInstall" -Value $partTwoCommand -PropertyType String -Force
-Write-Output "RunOnce entry created to execute Stage 2 script after reboot."
-
-################################################################################
-# STEP 4: INSTALL CHOCOLATEY + CHECK .NET 4.8
-################################################################################
-
-# Install Chocolatey if not present
-if (!(Get-Command choco.exe -ErrorAction SilentlyContinue)) {
-    Write-Output "Installing Chocolatey..."
-    Set-ExecutionPolicy Bypass -Scope Process -Force
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    Write-Output "Chocolatey installation complete."
-} else {
-    Write-Output "Chocolatey is already installed."
-}
 
 # Check if .NET 4.8 is installed
 $dotNet48Key = "HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
