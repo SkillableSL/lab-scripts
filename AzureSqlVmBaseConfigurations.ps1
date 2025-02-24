@@ -164,7 +164,7 @@ Write-Output "Stage 2 script written to $stage2Path."
 # STEP 3: CREATE A RUNONCE ENTRY TO EXECUTE STAGE 2 AFTER REBOOT
 ################################################################################
 $runOncePath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
-$partTwoCommand = "powershell.exe -ExecutionPolicy Bypass -File `"$stage2Path`""
+$partTwoCommand = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$stage2Path`""
 New-ItemProperty -Path $runOncePath -Name "PostDotNetInstall" -Value $partTwoCommand -PropertyType String -Force
 Write-Output "RunOnce entry created to execute Stage 2 script after reboot."
 
